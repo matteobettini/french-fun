@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🇫🇷 French Fun - Learn French the Fun Way!</title>
+    <title>🇫🇷 French Fun - Intermediate French Practice</title>
     <style>
         * {
             margin: 0;
@@ -932,6 +932,93 @@
             color: var(--gold);
             font-size: 1rem;
         }
+
+        /* Conjugation Game */
+        .conjugation-container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .conjugation-verb {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--french-blue);
+            margin-bottom: 5px;
+        }
+
+        .conjugation-meaning {
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .conjugation-tense {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--french-blue), var(--dark-blue));
+            color: white;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 1rem;
+            margin-bottom: 15px;
+        }
+
+        .conjugation-prompt {
+            font-size: 1.5rem;
+            color: var(--dark-blue);
+            margin-bottom: 25px;
+        }
+
+        .conjugation-prompt .subject {
+            font-weight: bold;
+            color: var(--french-red);
+        }
+
+        .conjugation-options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .conjugation-option {
+            background: white;
+            border: 3px solid var(--french-blue);
+            color: var(--dark-blue);
+            padding: 18px 25px;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+        }
+
+        .conjugation-option:hover {
+            background: var(--french-blue);
+            color: white;
+            transform: scale(1.02);
+        }
+
+        .conjugation-option.correct {
+            background: var(--success);
+            border-color: var(--success);
+            color: white;
+        }
+
+        .conjugation-option.wrong {
+            background: var(--error);
+            border-color: var(--error);
+            color: white;
+        }
+
+        .fill-hint-text {
+            font-size: 0.9rem;
+            color: #888;
+            font-style: italic;
+            margin-top: 15px;
+        }
     </style>
 </head>
 <body>
@@ -946,7 +1033,7 @@
     <div class="header">
         <div class="header-content">
             <h1>🇫🇷 French Fun!</h1>
-            <p>Learn French the fun way • Apprendre le français en s'amusant!</p>
+            <p>Intermediate French Practice • Perfectionnez votre français!</p>
             <button class="sound-toggle" id="sound-toggle" onclick="toggleSound()" title="Toggle sound effects">
                 <span id="sound-icon">🔊</span>
             </button>
@@ -973,14 +1060,14 @@
     <div class="container">
         <!-- Menu Screen -->
         <div class="menu-screen" id="menu-screen">
-            <h2 style="color: var(--dark-blue); font-size: 1.8rem; margin-bottom: 10px;">Choose Your Adventure!</h2>
-            <p style="color: #666;">Pick a game mode and start learning</p>
+            <h2 style="color: var(--dark-blue); font-size: 1.8rem; margin-bottom: 10px;">Intermediate French Practice</h2>
+            <p style="color: #666;">Choose a game mode to improve your French</p>
 
             <div class="category-selector">
                 <button class="category-btn active" data-category="all">All Words</button>
-                <button class="category-btn" data-category="greetings">Greetings</button>
-                <button class="category-btn" data-category="numbers">Numbers</button>
-                <button class="category-btn" data-category="common">Common Words</button>
+                <button class="category-btn" data-category="idioms">Idioms</button>
+                <button class="category-btn" data-category="falseFriends">False Friends</button>
+                <button class="category-btn" data-category="phrases">Phrases</button>
             </div>
 
             <div class="game-modes">
@@ -988,23 +1075,28 @@
                     <div id="daily-completed-badge" class="daily-badge" style="display: none;">Completed!</div>
                     <div class="game-card-icon">📅</div>
                     <h3>Daily Challenge</h3>
-                    <p>60-second rapid-fire mixed questions!</p>
+                    <p>60-second rapid-fire intermediate questions!</p>
                     <span class="bonus-xp">2x XP BONUS</span>
+                </div>
+                <div class="game-card" onclick="startGame('conjugate')">
+                    <div class="game-card-icon">📝</div>
+                    <h3>Conjugation</h3>
+                    <p>Master être, avoir, aller, faire and more!</p>
                 </div>
                 <div class="game-card" onclick="startGame('match')">
                     <div class="game-card-icon">🔗</div>
                     <h3>Word Match</h3>
-                    <p>Match French words with their English translations!</p>
+                    <p>Match idioms and expressions with meanings!</p>
                 </div>
                 <div class="game-card" onclick="startGame('fill')">
                     <div class="game-card-icon">✏️</div>
                     <h3>Fill the Blank</h3>
-                    <p>Complete sentences with the correct French word!</p>
+                    <p>Complete sentences with context clues!</p>
                 </div>
                 <div class="game-card" onclick="startGame('listen')">
                     <div class="game-card-icon">🎧</div>
                     <h3>Listening</h3>
-                    <p>Listen and identify the spoken French word!</p>
+                    <p>Listen and identify French expressions!</p>
                 </div>
             </div>
         </div>
@@ -1046,6 +1138,19 @@
             </div>
             <div class="listen-container" id="listen-container"></div>
             <button class="next-btn" id="listen-next" onclick="nextListenRound()">Next Word →</button>
+        </div>
+
+        <!-- Conjugation Game -->
+        <div class="game-screen" id="conjugate-game">
+            <div class="game-header">
+                <button class="back-btn" onclick="showMenu()">← Back</button>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="conjugate-progress" style="width: 0%"></div>
+                </div>
+                <div class="score-display">Score: <span id="conjugate-score">0</span></div>
+            </div>
+            <div class="conjugation-container" id="conjugate-container"></div>
+            <button class="next-btn" id="conjugate-next" onclick="nextConjugateRound()">Next Verb →</button>
         </div>
 
         <!-- Daily Challenge Game -->
@@ -1090,75 +1195,176 @@
     <script>
         // ==================== VOCABULARY DATA ====================
         const vocabulary = {
-            greetings: [
-                { french: "Bonjour", english: "Hello/Good day", pronunciation: "bon-ZHOOR" },
-                { french: "Bonsoir", english: "Good evening", pronunciation: "bon-SWAHR" },
-                { french: "Salut", english: "Hi/Bye (informal)", pronunciation: "sah-LU" },
-                { french: "Au revoir", english: "Goodbye", pronunciation: "oh ruh-VWAHR" },
-                { french: "Merci", english: "Thank you", pronunciation: "mair-SEE" },
-                { french: "S'il vous plaît", english: "Please", pronunciation: "seel voo PLEH" },
-                { french: "Excusez-moi", english: "Excuse me", pronunciation: "ex-koo-zay MWAH" },
-                { french: "Oui", english: "Yes", pronunciation: "WEE" },
-                { french: "Non", english: "No", pronunciation: "NOH" },
-                { french: "Comment ça va?", english: "How are you?", pronunciation: "koh-mohn sah VAH" },
-                { french: "Ça va bien", english: "I'm fine", pronunciation: "sah vah BYEH" },
-                { french: "Bonne nuit", english: "Good night", pronunciation: "bun NWEE" }
+            // INTERMEDIATE: Idiomatic expressions
+            idioms: [
+                { french: "Avoir l'air", english: "To seem/look like", pronunciation: "ah-VWAHR LAIR" },
+                { french: "Avoir beau", english: "No matter how much (try)", pronunciation: "ah-VWAHR BOH" },
+                { french: "En avoir marre", english: "To be fed up", pronunciation: "on ah-VWAHR MAR" },
+                { french: "Avoir le cafard", english: "To feel down/blue", pronunciation: "ah-VWAHR luh kah-FAR" },
+                { french: "Tomber dans les pommes", english: "To faint", pronunciation: "tom-BAY don lay POM" },
+                { french: "Poser un lapin", english: "To stand someone up", pronunciation: "poh-ZAY uh lah-PAN" },
+                { french: "Coûter les yeux de la tête", english: "To cost an arm and a leg", pronunciation: "koo-TAY lay ZYUH duh lah TET" },
+                { french: "Mettre son grain de sel", english: "To put in one's two cents", pronunciation: "MET-ruh son gran duh SEL" },
+                { french: "Avoir du pain sur la planche", english: "To have a lot on one's plate", pronunciation: "ah-VWAHR doo PAN soor lah PLONSH" },
+                { french: "Ce n'est pas la mer à boire", english: "It's not that difficult", pronunciation: "suh NAY pah lah MAIR ah BWAHR" },
+                { french: "Donner sa langue au chat", english: "To give up (guessing)", pronunciation: "doh-NAY sah LONG oh SHAH" },
+                { french: "Avoir la flemme", english: "To feel lazy", pronunciation: "ah-VWAHR lah FLEM" },
+                { french: "Ça ne casse pas trois pattes à un canard", english: "Nothing to write home about", pronunciation: "sah nuh KASS pah TWAH PAT ah uh kah-NAR" },
+                { french: "Être dans la lune", english: "To be daydreaming", pronunciation: "ET-ruh don lah LOON" },
+                { french: "Faire la grasse matinée", english: "To sleep in", pronunciation: "FAIR lah GRASS mah-tee-NAY" }
             ],
-            numbers: [
-                { french: "Un", english: "One", pronunciation: "UH" },
-                { french: "Deux", english: "Two", pronunciation: "DUH" },
-                { french: "Trois", english: "Three", pronunciation: "TWAH" },
-                { french: "Quatre", english: "Four", pronunciation: "KAH-truh" },
-                { french: "Cinq", english: "Five", pronunciation: "SANK" },
-                { french: "Six", english: "Six", pronunciation: "SEES" },
-                { french: "Sept", english: "Seven", pronunciation: "SET" },
-                { french: "Huit", english: "Eight", pronunciation: "WEET" },
-                { french: "Neuf", english: "Nine", pronunciation: "NUF" },
-                { french: "Dix", english: "Ten", pronunciation: "DEES" },
-                { french: "Onze", english: "Eleven", pronunciation: "ONZE" },
-                { french: "Douze", english: "Twelve", pronunciation: "DOOZ" },
-                { french: "Treize", english: "Thirteen", pronunciation: "TREZ" },
-                { french: "Quatorze", english: "Fourteen", pronunciation: "kah-TORZ" },
-                { french: "Quinze", english: "Fifteen", pronunciation: "KANZ" },
-                { french: "Seize", english: "Sixteen", pronunciation: "SEZ" },
-                { french: "Dix-sept", english: "Seventeen", pronunciation: "dee-SET" },
-                { french: "Dix-huit", english: "Eighteen", pronunciation: "deez-WEET" },
-                { french: "Dix-neuf", english: "Nineteen", pronunciation: "deez-NUF" },
-                { french: "Vingt", english: "Twenty", pronunciation: "VAN" }
+            // INTERMEDIATE: False friends (faux amis)
+            falseFriends: [
+                { french: "Actuellement", english: "Currently (NOT actually)", pronunciation: "ak-too-el-MOHN" },
+                { french: "Assister à", english: "To attend (NOT assist)", pronunciation: "ah-sees-TAY ah" },
+                { french: "Attendre", english: "To wait (NOT attend)", pronunciation: "ah-TOND-ruh" },
+                { french: "Blesser", english: "To injure (NOT bless)", pronunciation: "bleh-SAY" },
+                { french: "Chair", english: "Flesh (NOT chair)", pronunciation: "SHAIR" },
+                { french: "Coin", english: "Corner (NOT coin)", pronunciation: "KWAN" },
+                { french: "Demander", english: "To ask (NOT demand)", pronunciation: "duh-mon-DAY" },
+                { french: "Entrée", english: "Starter/appetizer (NOT entrance)", pronunciation: "on-TRAY" },
+                { french: "Éventuellement", english: "Possibly (NOT eventually)", pronunciation: "ay-von-too-el-MOHN" },
+                { french: "Formidable", english: "Wonderful (NOT scary)", pronunciation: "for-mee-DAH-bluh" },
+                { french: "Librairie", english: "Bookstore (NOT library)", pronunciation: "lee-breh-REE" },
+                { french: "Location", english: "Rental (NOT location)", pronunciation: "loh-kah-SYON" },
+                { french: "Monnaie", english: "Currency/change (NOT money)", pronunciation: "moh-NAY" },
+                { french: "Préservatif", english: "Condom (NOT preservative)", pronunciation: "pray-zair-vah-TEEF" },
+                { french: "Rester", english: "To stay (NOT rest)", pronunciation: "res-TAY" },
+                { french: "Sympathique", english: "Nice/likeable (NOT sympathetic)", pronunciation: "sam-pah-TEEK" },
+                { french: "Travail", english: "Work (NOT travel)", pronunciation: "trah-VAH-yuh" }
             ],
+            // INTERMEDIATE: Complex phrases and expressions
+            phrases: [
+                { french: "Quoi qu'il en soit", english: "Be that as it may", pronunciation: "KWAH keel on SWAH" },
+                { french: "Au fur et à mesure", english: "Gradually/as (time) goes by", pronunciation: "oh FOOR ay ah muh-ZOOR" },
+                { french: "À mon avis", english: "In my opinion", pronunciation: "ah mon ah-VEE" },
+                { french: "En tout cas", english: "In any case", pronunciation: "on TOO KAH" },
+                { french: "Par contre", english: "On the other hand", pronunciation: "par KONT-ruh" },
+                { french: "D'ailleurs", english: "Besides/moreover", pronunciation: "dah-YOOR" },
+                { french: "En revanche", english: "However/on the other hand", pronunciation: "on ruh-VONSH" },
+                { french: "À vrai dire", english: "To tell the truth", pronunciation: "ah VRAY DEER" },
+                { french: "Tant pis", english: "Too bad/never mind", pronunciation: "ton PEE" },
+                { french: "Tant mieux", english: "So much the better", pronunciation: "ton MYUH" },
+                { french: "N'importe quoi", english: "Whatever/nonsense", pronunciation: "nam-PORT KWAH" },
+                { french: "Ça m'est égal", english: "I don't mind/care", pronunciation: "sah may tay-GAL" },
+                { french: "Il s'agit de", english: "It's about/concerns", pronunciation: "eel sah-ZHEE duh" },
+                { french: "Avoir hâte de", english: "To look forward to", pronunciation: "ah-VWAHR AHT duh" },
+                { french: "Se rendre compte", english: "To realize", pronunciation: "suh ROND-ruh KONT" }
+            ],
+            // Keep minimal common vocabulary for variety
             common: [
-                { french: "Le chat", english: "The cat", pronunciation: "luh SHAH" },
-                { french: "Le chien", english: "The dog", pronunciation: "luh SHYEH" },
-                { french: "L'eau", english: "Water", pronunciation: "LOH" },
-                { french: "Le pain", english: "Bread", pronunciation: "luh PAN" },
-                { french: "Le fromage", english: "Cheese", pronunciation: "luh froh-MAHZH" },
-                { french: "La maison", english: "The house", pronunciation: "lah may-ZON" },
-                { french: "La voiture", english: "The car", pronunciation: "lah vwah-TOOR" },
-                { french: "Le livre", english: "The book", pronunciation: "luh LEE-vruh" },
-                { french: "L'ami", english: "The friend", pronunciation: "lah-MEE" },
-                { french: "La famille", english: "The family", pronunciation: "lah fah-MEE-yuh" },
-                { french: "Je t'aime", english: "I love you", pronunciation: "zhuh TEM" },
-                { french: "C'est bon", english: "It's good", pronunciation: "say BON" },
-                { french: "Je suis", english: "I am", pronunciation: "zhuh SWEE" },
-                { french: "Manger", english: "To eat", pronunciation: "mahn-ZHAY" },
-                { french: "Boire", english: "To drink", pronunciation: "BWAHR" }
+                { french: "Cependant", english: "However", pronunciation: "suh-pon-DON" },
+                { french: "Néanmoins", english: "Nevertheless", pronunciation: "nay-on-MWAN" },
+                { french: "Auparavant", english: "Previously", pronunciation: "oh-pah-rah-VON" },
+                { french: "Dorénavant", english: "From now on", pronunciation: "doh-ray-nah-VON" },
+                { french: "Davantage", english: "More/further", pronunciation: "dah-von-TAHZH" },
+                { french: "Environ", english: "Approximately", pronunciation: "on-vee-RON" },
+                { french: "Plutôt", english: "Rather", pronunciation: "ploo-TOH" },
+                { french: "Quasiment", english: "Almost/nearly", pronunciation: "kah-zee-MON" },
+                { french: "Malgré", english: "Despite", pronunciation: "mal-GRAY" },
+                { french: "Sauf", english: "Except", pronunciation: "SOHF" }
             ]
         };
 
-        // Fill in the blank sentences
+        // INTERMEDIATE: Verb conjugations for conjugation game
+        const conjugations = {
+            être: {
+                infinitive: "être",
+                meaning: "to be",
+                present: { je: "suis", tu: "es", il: "est", nous: "sommes", vous: "êtes", ils: "sont" },
+                passeCompose: { je: "ai été", tu: "as été", il: "a été", nous: "avons été", vous: "avez été", ils: "ont été" },
+                imparfait: { je: "étais", tu: "étais", il: "était", nous: "étions", vous: "étiez", ils: "étaient" }
+            },
+            avoir: {
+                infinitive: "avoir",
+                meaning: "to have",
+                present: { je: "ai", tu: "as", il: "a", nous: "avons", vous: "avez", ils: "ont" },
+                passeCompose: { je: "ai eu", tu: "as eu", il: "a eu", nous: "avons eu", vous: "avez eu", ils: "ont eu" },
+                imparfait: { je: "avais", tu: "avais", il: "avait", nous: "avions", vous: "aviez", ils: "avaient" }
+            },
+            aller: {
+                infinitive: "aller",
+                meaning: "to go",
+                present: { je: "vais", tu: "vas", il: "va", nous: "allons", vous: "allez", ils: "vont" },
+                passeCompose: { je: "suis allé(e)", tu: "es allé(e)", il: "est allé", nous: "sommes allé(e)s", vous: "êtes allé(e)(s)", ils: "sont allés" },
+                imparfait: { je: "allais", tu: "allais", il: "allait", nous: "allions", vous: "alliez", ils: "allaient" }
+            },
+            faire: {
+                infinitive: "faire",
+                meaning: "to do/make",
+                present: { je: "fais", tu: "fais", il: "fait", nous: "faisons", vous: "faites", ils: "font" },
+                passeCompose: { je: "ai fait", tu: "as fait", il: "a fait", nous: "avons fait", vous: "avez fait", ils: "ont fait" },
+                imparfait: { je: "faisais", tu: "faisais", il: "faisait", nous: "faisions", vous: "faisiez", ils: "faisaient" }
+            },
+            pouvoir: {
+                infinitive: "pouvoir",
+                meaning: "to be able to/can",
+                present: { je: "peux", tu: "peux", il: "peut", nous: "pouvons", vous: "pouvez", ils: "peuvent" },
+                passeCompose: { je: "ai pu", tu: "as pu", il: "a pu", nous: "avons pu", vous: "avez pu", ils: "ont pu" },
+                imparfait: { je: "pouvais", tu: "pouvais", il: "pouvait", nous: "pouvions", vous: "pouviez", ils: "pouvaient" }
+            },
+            vouloir: {
+                infinitive: "vouloir",
+                meaning: "to want",
+                present: { je: "veux", tu: "veux", il: "veut", nous: "voulons", vous: "voulez", ils: "veulent" },
+                passeCompose: { je: "ai voulu", tu: "as voulu", il: "a voulu", nous: "avons voulu", vous: "avez voulu", ils: "ont voulu" },
+                imparfait: { je: "voulais", tu: "voulais", il: "voulait", nous: "voulions", vous: "vouliez", ils: "voulaient" }
+            },
+            devoir: {
+                infinitive: "devoir",
+                meaning: "to have to/must",
+                present: { je: "dois", tu: "dois", il: "doit", nous: "devons", vous: "devez", ils: "doivent" },
+                passeCompose: { je: "ai dû", tu: "as dû", il: "a dû", nous: "avons dû", vous: "avez dû", ils: "ont dû" },
+                imparfait: { je: "devais", tu: "devais", il: "devait", nous: "devions", vous: "deviez", ils: "devaient" }
+            },
+            savoir: {
+                infinitive: "savoir",
+                meaning: "to know (fact)",
+                present: { je: "sais", tu: "sais", il: "sait", nous: "savons", vous: "savez", ils: "savent" },
+                passeCompose: { je: "ai su", tu: "as su", il: "a su", nous: "avons su", vous: "avez su", ils: "ont su" },
+                imparfait: { je: "savais", tu: "savais", il: "savait", nous: "savions", vous: "saviez", ils: "savaient" }
+            },
+            prendre: {
+                infinitive: "prendre",
+                meaning: "to take",
+                present: { je: "prends", tu: "prends", il: "prend", nous: "prenons", vous: "prenez", ils: "prennent" },
+                passeCompose: { je: "ai pris", tu: "as pris", il: "a pris", nous: "avons pris", vous: "avez pris", ils: "ont pris" },
+                imparfait: { je: "prenais", tu: "prenais", il: "prenait", nous: "prenions", vous: "preniez", ils: "prenaient" }
+            },
+            venir: {
+                infinitive: "venir",
+                meaning: "to come",
+                present: { je: "viens", tu: "viens", il: "vient", nous: "venons", vous: "venez", ils: "viennent" },
+                passeCompose: { je: "suis venu(e)", tu: "es venu(e)", il: "est venu", nous: "sommes venu(e)s", vous: "êtes venu(e)(s)", ils: "sont venus" },
+                imparfait: { je: "venais", tu: "venais", il: "venait", nous: "venions", vous: "veniez", ils: "venaient" }
+            }
+        };
+
+        // INTERMEDIATE: Challenging fill in the blank sentences
         const fillSentences = [
-            { sentence: "___ is how you say 'hello' in French", answer: "Bonjour", options: ["Bonjour", "Au revoir", "Merci", "Salut"] },
-            { sentence: "To say 'thank you', you say ___", answer: "Merci", options: ["Merci", "S'il vous plaît", "Oui", "Non"] },
-            { sentence: "The number 5 in French is ___", answer: "Cinq", options: ["Cinq", "Quatre", "Six", "Sept"] },
-            { sentence: "___ means 'goodbye' in French", answer: "Au revoir", options: ["Au revoir", "Bonjour", "Salut", "Bonsoir"] },
-            { sentence: "To count to 10, you end with ___", answer: "Dix", options: ["Dix", "Neuf", "Onze", "Huit"] },
-            { sentence: "'The cat' in French is ___", answer: "Le chat", options: ["Le chat", "Le chien", "La maison", "Le livre"] },
-            { sentence: "___ means 'yes' in French", answer: "Oui", options: ["Oui", "Non", "Merci", "Salut"] },
-            { sentence: "The number 15 is ___", answer: "Quinze", options: ["Quinze", "Quatorze", "Seize", "Treize"] },
-            { sentence: "'Good evening' in French is ___", answer: "Bonsoir", options: ["Bonsoir", "Bonjour", "Bonne nuit", "Salut"] },
-            { sentence: "___ means 'I love you'", answer: "Je t'aime", options: ["Je t'aime", "Je suis", "C'est bon", "Merci"] },
-            { sentence: "'Water' in French is ___", answer: "L'eau", options: ["L'eau", "Le pain", "Le fromage", "Le vin"] },
-            { sentence: "The number 20 is ___", answer: "Vingt", options: ["Vingt", "Dix-neuf", "Dix-huit", "Douze"] }
+            // False friends in context
+            { sentence: "Je vais ___ à la conférence demain. (I will attend...)", answer: "assister", options: ["assister", "aider", "attendre", "arriver"], hint: "Remember: assister means 'to attend', not 'to assist'" },
+            { sentence: "Il travaille ___ dans une banque. (He currently works...)", answer: "actuellement", options: ["actuellement", "vraiment", "éventuellement", "finalement"], hint: "False friend: actuellement ≠ actually" },
+            { sentence: "Je dois ___ le bus pendant 20 minutes. (I have to wait for...)", answer: "attendre", options: ["attendre", "assister", "entendre", "prendre"], hint: "Attendre means 'to wait', not 'to attend'" },
+            { sentence: "Cette ___ vend des romans et des BD. (This bookstore...)", answer: "librairie", options: ["librairie", "bibliothèque", "papeterie", "boutique"], hint: "Librairie = bookstore, bibliothèque = library" },
+
+            // Idiomatic expressions
+            { sentence: "J'___ de ce travail répétitif! (I'm fed up with...)", answer: "en ai marre", options: ["en ai marre", "ai faim", "ai peur", "ai sommeil"], hint: "En avoir marre = to be fed up" },
+            { sentence: "Elle ___ fatiguée après le voyage. (She seems tired...)", answer: "a l'air", options: ["a l'air", "a envie", "a besoin", "a raison"], hint: "Avoir l'air = to seem/look like" },
+            { sentence: "Il ___ étudier, il a échoué à l'examen. (No matter how much he studied...)", answer: "a beau", options: ["a beau", "a pu", "a dû", "a su"], hint: "Avoir beau = no matter how much one tries" },
+            { sentence: "Ce restaurant ___ ! C'est trop cher! (costs an arm and a leg)", answer: "coûte les yeux de la tête", options: ["coûte les yeux de la tête", "coûte cher", "coûte peu", "vaut le coup"], hint: "French idiom for 'very expensive'" },
+
+            // Complex phrases
+            { sentence: "___, je pense qu'il a tort. (In my opinion...)", answer: "À mon avis", options: ["À mon avis", "En effet", "Par exemple", "En fait"], hint: "Common phrase to express opinion" },
+            { sentence: "Le film était bon mais, ___, le livre était meilleur. (on the other hand...)", answer: "en revanche", options: ["en revanche", "en plus", "en général", "en retard"], hint: "En revanche = on the other hand/however" },
+            { sentence: "___ si tu ne veux pas venir. (Too bad...)", answer: "Tant pis", options: ["Tant pis", "Tant mieux", "Tout bien", "Très bien"], hint: "Tant pis = too bad / never mind" },
+            { sentence: "Tu as eu la promotion? ___! (So much the better!)", answer: "Tant mieux", options: ["Tant mieux", "Tant pis", "C'est vrai", "Bien sûr"], hint: "Tant mieux = great! / so much the better" },
+
+            // Conjugation in context
+            { sentence: "Quand j'___ petit, j'habitais à Paris. (When I was little...)", answer: "étais", options: ["étais", "suis", "ai été", "serai"], hint: "Imparfait of être - describing past states" },
+            { sentence: "Hier, nous ___ au cinéma. (Yesterday we went...)", answer: "sommes allés", options: ["sommes allés", "allions", "allons", "irons"], hint: "Passé composé with être" },
+            { sentence: "Elle ne ___ pas venir demain. (She cannot come...)", answer: "peut", options: ["peut", "peux", "pouvait", "pourra"], hint: "Present tense of pouvoir, 3rd person" },
+            { sentence: "Ils ___ partir avant minuit. (They had to leave...)", answer: "ont dû", options: ["ont dû", "devaient", "doivent", "devront"], hint: "Passé composé of devoir" }
         ];
 
         // ==================== GAME STATE ====================
@@ -1281,7 +1487,7 @@
         // ==================== UTILITY FUNCTIONS ====================
         function getWordsByCategory(category) {
             if (category === 'all') {
-                return [...vocabulary.greetings, ...vocabulary.numbers, ...vocabulary.common];
+                return [...vocabulary.idioms, ...vocabulary.falseFriends, ...vocabulary.phrases, ...vocabulary.common];
             }
             return vocabulary[category] || [];
         }
@@ -1365,6 +1571,7 @@
             if (type === 'match') initMatchGame();
             else if (type === 'fill') initFillGame();
             else if (type === 'listen') initListenGame();
+            else if (type === 'conjugate') initConjugateGame();
         }
 
         function playAgain() {
@@ -1502,9 +1709,10 @@
                 <div class="fill-hint">Choose the correct French word:</div>
                 <div class="fill-options">
                     ${shuffledOptions.map(opt => `
-                        <button class="fill-option" onclick="checkFillAnswer(this, '${opt}', '${question.answer}')">${opt}</button>
+                        <button class="fill-option" onclick="checkFillAnswer(this, '${opt.replace(/'/g, "\\'")}', '${question.answer.replace(/'/g, "\\'")}')">${opt}</button>
                     `).join('')}
                 </div>
+                ${question.hint ? `<div class="fill-hint-text">💡 ${question.hint}</div>` : ''}
             `;
         }
 
@@ -1650,6 +1858,120 @@
             loadListenRound();
         }
 
+        // ==================== CONJUGATION GAME ====================
+        const tenseNames = {
+            present: "Présent (Present)",
+            passeCompose: "Passé Composé (Past)",
+            imparfait: "Imparfait (Imperfect)"
+        };
+
+        const subjectPronouns = ['je', 'tu', 'il', 'nous', 'vous', 'ils'];
+
+        function initConjugateGame() {
+            gameState.round = 0;
+            document.getElementById('conjugate-score').textContent = '0';
+            document.getElementById('conjugate-progress').style.width = '0%';
+            document.getElementById('conjugate-next').classList.remove('show');
+            loadConjugateRound();
+        }
+
+        function loadConjugateRound() {
+            const verbKeys = Object.keys(conjugations);
+            const randomVerb = verbKeys[Math.floor(Math.random() * verbKeys.length)];
+            const verb = conjugations[randomVerb];
+
+            const tenses = ['present', 'passeCompose', 'imparfait'];
+            const randomTense = tenses[Math.floor(Math.random() * tenses.length)];
+            const randomSubject = subjectPronouns[Math.floor(Math.random() * subjectPronouns.length)];
+
+            const correctAnswer = verb[randomTense][randomSubject];
+
+            // Generate wrong options from other forms of the same verb or other verbs
+            let wrongOptions = [];
+
+            // Add forms from other subjects of same verb/tense
+            subjectPronouns.forEach(subj => {
+                if (subj !== randomSubject && verb[randomTense][subj] !== correctAnswer) {
+                    wrongOptions.push(verb[randomTense][subj]);
+                }
+            });
+
+            // Add forms from other tenses
+            tenses.forEach(t => {
+                if (t !== randomTense && verb[t][randomSubject] !== correctAnswer) {
+                    wrongOptions.push(verb[t][randomSubject]);
+                }
+            });
+
+            // Shuffle and take 3 wrong options
+            wrongOptions = shuffleArray([...new Set(wrongOptions)]).slice(0, 3);
+            const options = shuffleArray([correctAnswer, ...wrongOptions]);
+
+            const container = document.getElementById('conjugate-container');
+            const subjectDisplay = randomSubject === 'il' ? 'il/elle/on' :
+                                   randomSubject === 'ils' ? 'ils/elles' : randomSubject;
+
+            container.innerHTML = `
+                <div class="conjugation-verb">${verb.infinitive}</div>
+                <div class="conjugation-meaning">${verb.meaning}</div>
+                <div class="conjugation-tense">${tenseNames[randomTense]}</div>
+                <div class="conjugation-prompt">
+                    <span class="subject">${subjectDisplay.charAt(0).toUpperCase() + subjectDisplay.slice(1)}</span> ___
+                </div>
+                <div class="conjugation-options">
+                    ${options.map(opt => `
+                        <button class="conjugation-option" onclick="checkConjugateAnswer(this, '${opt.replace(/'/g, "\\'")}', '${correctAnswer.replace(/'/g, "\\'")}', '${verb.infinitive}')">${opt}</button>
+                    `).join('')}
+                </div>
+            `;
+
+            // Speak the infinitive
+            setTimeout(() => speakWord(verb.infinitive), 300);
+        }
+
+        function checkConjugateAnswer(element, selected, correct, verbInfinitive) {
+            const buttons = document.querySelectorAll('.conjugation-option');
+            buttons.forEach(btn => btn.disabled = true);
+
+            if (selected === correct) {
+                element.classList.add('correct');
+                gameState.score += 40;
+                gameState.correct++;
+
+                playSound('correct');
+                showToast('Bravo! +40 XP 📝', 'success');
+                learnWord(verbInfinitive);
+                updateWordStats(verbInfinitive, true);
+            } else {
+                element.classList.add('wrong');
+                buttons.forEach(btn => {
+                    if (btn.textContent === correct) btn.classList.add('correct');
+                });
+                gameState.wrong++;
+
+                playSound('wrong');
+                showToast(`Correct: ${correct}`, 'error');
+                updateWordStats(verbInfinitive, false);
+            }
+
+            document.getElementById('conjugate-score').textContent = gameState.score;
+            gameState.round++;
+
+            const progressPercent = (gameState.round / gameState.totalRounds) * 100;
+            document.getElementById('conjugate-progress').style.width = progressPercent + '%';
+
+            if (gameState.round >= gameState.totalRounds) {
+                setTimeout(endGame, 1500);
+            } else {
+                document.getElementById('conjugate-next').classList.add('show');
+            }
+        }
+
+        function nextConjugateRound() {
+            document.getElementById('conjugate-next').classList.remove('show');
+            loadConjugateRound();
+        }
+
         // ==================== DAILY CHALLENGE ====================
         let dailyState = {
             timer: 60,
@@ -1731,36 +2053,67 @@
         function loadDailyQuestion() {
             if (!dailyState.isActive) return;
 
-            // Get random question type and word
-            const allWords = [...vocabulary.greetings, ...vocabulary.numbers, ...vocabulary.common];
+            // Get random question type and word from intermediate vocabulary
+            const allWords = [...vocabulary.idioms, ...vocabulary.falseFriends, ...vocabulary.phrases, ...vocabulary.common];
             const correctWord = shuffleArray(allWords)[0];
             const otherWords = shuffleArray(allWords.filter(w => w.french !== correctWord.french)).slice(0, 3);
             const options = shuffleArray([correctWord, ...otherWords]);
 
-            // Random question type
-            const questionTypes = ['translate', 'identify'];
+            // Random question type: translate, identify, or conjugate
+            const questionTypes = ['translate', 'identify', 'conjugate'];
             const questionType = questionTypes[Math.floor(Math.random() * questionTypes.length)];
 
             const container = document.getElementById('daily-container');
 
-            if (questionType === 'translate') {
+            if (questionType === 'conjugate') {
+                // Conjugation question
+                const verbKeys = Object.keys(conjugations);
+                const randomVerb = verbKeys[Math.floor(Math.random() * verbKeys.length)];
+                const verb = conjugations[randomVerb];
+                const tenses = ['present', 'passeCompose', 'imparfait'];
+                const randomTense = tenses[Math.floor(Math.random() * tenses.length)];
+                const randomSubject = subjectPronouns[Math.floor(Math.random() * subjectPronouns.length)];
+                const correctAnswer = verb[randomTense][randomSubject];
+
+                let wrongOptions = [];
+                subjectPronouns.forEach(subj => {
+                    if (subj !== randomSubject && verb[randomTense][subj] !== correctAnswer) {
+                        wrongOptions.push(verb[randomTense][subj]);
+                    }
+                });
+                wrongOptions = shuffleArray([...new Set(wrongOptions)]).slice(0, 3);
+                const conjOptions = shuffleArray([correctAnswer, ...wrongOptions]);
+
+                const subjectDisplay = randomSubject === 'il' ? 'il/elle' :
+                                       randomSubject === 'ils' ? 'ils/elles' : randomSubject;
+
                 container.innerHTML = `
-                    <div class="daily-question">What is the English translation?</div>
+                    <div class="daily-question">Conjugate: ${verb.infinitive} (${tenseNames[randomTense]})</div>
+                    <div class="daily-french-word">${subjectDisplay} ___</div>
+                    <div class="daily-options">
+                        ${conjOptions.map(opt => `
+                            <button class="daily-option" onclick="checkDailyAnswer(this, '${opt.replace(/'/g, "\\'")}', '${correctAnswer.replace(/'/g, "\\'")}', '${verb.infinitive}')">${opt}</button>
+                        `).join('')}
+                    </div>
+                `;
+            } else if (questionType === 'translate') {
+                container.innerHTML = `
+                    <div class="daily-question">What is the English meaning?</div>
                     <div class="daily-french-word">${correctWord.french}</div>
                     <div class="daily-pronunciation">${correctWord.pronunciation}</div>
                     <div class="daily-options">
                         ${options.map(opt => `
-                            <button class="daily-option" onclick="checkDailyAnswer(this, '${opt.english}', '${correctWord.english}', '${correctWord.french}')">${opt.english}</button>
+                            <button class="daily-option" onclick="checkDailyAnswer(this, '${opt.english.replace(/'/g, "\\'")}', '${correctWord.english.replace(/'/g, "\\'")}', '${correctWord.french.replace(/'/g, "\\'")}')">${opt.english}</button>
                         `).join('')}
                     </div>
                 `;
             } else {
                 container.innerHTML = `
-                    <div class="daily-question">What is the French word for:</div>
+                    <div class="daily-question">What is the French expression for:</div>
                     <div class="daily-french-word">${correctWord.english}</div>
                     <div class="daily-options">
                         ${options.map(opt => `
-                            <button class="daily-option" onclick="checkDailyAnswer(this, '${opt.french}', '${correctWord.french}', '${correctWord.french}')">${opt.french}</button>
+                            <button class="daily-option" onclick="checkDailyAnswer(this, '${opt.french.replace(/'/g, "\\'")}', '${correctWord.french.replace(/'/g, "\\'")}', '${correctWord.french.replace(/'/g, "\\'")}')">${opt.french}</button>
                         `).join('')}
                     </div>
                 `;
