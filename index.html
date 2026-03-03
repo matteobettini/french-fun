@@ -71,6 +71,37 @@
             opacity: 0.9;
         }
 
+        .header-content {
+            position: relative;
+        }
+
+        .sound-toggle {
+            position: absolute;
+            top: 50%;
+            right: 20px;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            cursor: pointer;
+            font-size: 1.4rem;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sound-toggle:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .sound-toggle.muted {
+            opacity: 0.6;
+        }
+
         @keyframes bounce {
             0%, 100% { transform: translateY(0); }
             50% { transform: translateY(-5px); }
@@ -916,6 +947,9 @@
         <div class="header-content">
             <h1>🇫🇷 French Fun!</h1>
             <p>Learn French the fun way • Apprendre le français en s'amusant!</p>
+            <button class="sound-toggle" id="sound-toggle" onclick="toggleSound()" title="Toggle sound effects">
+                <span id="sound-icon">🔊</span>
+            </button>
         </div>
     </div>
 
@@ -1269,6 +1303,11 @@
         }
 
         function playSound(type) {
+            // Check if sound is muted
+            if (localStorage.getItem('frenchFunSoundMuted') === 'true') {
+                return;
+            }
+
             // Using Web Audio API for simple sounds
             const audioContext = new (window.AudioContext || window.webkitAudioContext)();
             const oscillator = audioContext.createOscillator();
@@ -1865,6 +1904,34 @@
         // ==================== INITIALIZATION ====================
         loadProgress();
         updateDailyBadge();
+        initSoundToggle();
+
+        // ==================== SOUND TOGGLE ====================
+        function initSoundToggle() {
+            const isMuted = localStorage.getItem('frenchFunSoundMuted') === 'true';
+            updateSoundIcon(isMuted);
+        }
+
+        function toggleSound() {
+            const isMuted = localStorage.getItem('frenchFunSoundMuted') === 'true';
+            const newMuted = !isMuted;
+            localStorage.setItem('frenchFunSoundMuted', newMuted);
+            updateSoundIcon(newMuted);
+        }
+
+        function updateSoundIcon(isMuted) {
+            const icon = document.getElementById('sound-icon');
+            const btn = document.getElementById('sound-toggle');
+            if (isMuted) {
+                icon.textContent = '🔇';
+                btn.classList.add('muted');
+                btn.title = 'Sound off - Click to unmute';
+            } else {
+                icon.textContent = '🔊';
+                btn.classList.remove('muted');
+                btn.title = 'Sound on - Click to mute';
+            }
+        }
     </script>
 </body>
 </html>
