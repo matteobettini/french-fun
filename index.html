@@ -717,6 +717,190 @@
             background: var(--french-blue);
             color: white;
         }
+
+        /* Daily Challenge */
+        .daily-challenge-card {
+            background: linear-gradient(135deg, var(--gold) 0%, #FFA000 100%);
+            border: 3px solid #E65100;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .daily-challenge-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: shimmer 3s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) rotate(45deg); }
+        }
+
+        .daily-challenge-card:hover {
+            border-color: var(--french-red);
+        }
+
+        .daily-challenge-card h3 {
+            color: #333;
+        }
+
+        .daily-challenge-card p {
+            color: #555;
+        }
+
+        .daily-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: var(--success);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            animation: badgePulse 2s infinite;
+        }
+
+        @keyframes badgePulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .bonus-xp {
+            background: var(--french-red);
+            color: white;
+            padding: 3px 10px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            display: inline-block;
+            margin-top: 8px;
+        }
+
+        /* Challenge Timer */
+        .challenge-timer {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .timer-display {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--french-red);
+            background: white;
+            padding: 10px 25px;
+            border-radius: 15px;
+            box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+            min-width: 120px;
+            text-align: center;
+        }
+
+        .timer-display.warning {
+            color: #FF5722;
+            animation: timerPulse 0.5s infinite;
+        }
+
+        .timer-display.critical {
+            color: var(--error);
+            animation: timerPulse 0.3s infinite;
+        }
+
+        @keyframes timerPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .timer-label {
+            font-size: 1rem;
+            color: #666;
+        }
+
+        /* Daily Challenge Container */
+        .daily-container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .daily-question {
+            font-size: 1.5rem;
+            color: var(--dark-blue);
+            margin-bottom: 10px;
+        }
+
+        .daily-french-word {
+            font-size: 2.2rem;
+            font-weight: bold;
+            color: var(--french-blue);
+            margin-bottom: 5px;
+        }
+
+        .daily-pronunciation {
+            font-size: 1rem;
+            color: #888;
+            font-style: italic;
+            margin-bottom: 20px;
+        }
+
+        .daily-options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            max-width: 450px;
+            margin: 0 auto;
+        }
+
+        .daily-option {
+            background: white;
+            border: 3px solid var(--french-blue);
+            color: var(--dark-blue);
+            padding: 15px 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: all 0.2s ease;
+        }
+
+        .daily-option:hover {
+            background: var(--french-blue);
+            color: white;
+            transform: scale(1.02);
+        }
+
+        .daily-option.correct {
+            background: var(--success);
+            border-color: var(--success);
+            color: white;
+        }
+
+        .daily-option.wrong {
+            background: var(--error);
+            border-color: var(--error);
+            color: white;
+        }
+
+        .daily-score-display {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--dark-blue);
+            margin-bottom: 15px;
+        }
+
+        .daily-score-display .xp-multiplier {
+            color: var(--gold);
+            font-size: 1rem;
+        }
     </style>
 </head>
 <body>
@@ -766,6 +950,13 @@
             </div>
 
             <div class="game-modes">
+                <div class="game-card daily-challenge-card" onclick="startDailyChallenge()" id="daily-challenge-card">
+                    <div id="daily-completed-badge" class="daily-badge" style="display: none;">Completed!</div>
+                    <div class="game-card-icon">📅</div>
+                    <h3>Daily Challenge</h3>
+                    <p>60-second rapid-fire mixed questions!</p>
+                    <span class="bonus-xp">2x XP BONUS</span>
+                </div>
                 <div class="game-card" onclick="startGame('match')">
                     <div class="game-card-icon">🔗</div>
                     <h3>Word Match</h3>
@@ -821,6 +1012,19 @@
             </div>
             <div class="listen-container" id="listen-container"></div>
             <button class="next-btn" id="listen-next" onclick="nextListenRound()">Next Word →</button>
+        </div>
+
+        <!-- Daily Challenge Game -->
+        <div class="game-screen" id="daily-game">
+            <div class="game-header">
+                <button class="back-btn" onclick="endDailyChallenge()">← End</button>
+                <div class="challenge-timer">
+                    <span class="timer-label">⏱️ Time:</span>
+                    <div class="timer-display" id="daily-timer">60</div>
+                </div>
+                <div class="score-display">Score: <span id="daily-score">0</span> <span class="xp-multiplier">(2x XP)</span></div>
+            </div>
+            <div class="daily-container" id="daily-container"></div>
         </div>
     </div>
 
@@ -1407,6 +1611,208 @@
             loadListenRound();
         }
 
+        // ==================== DAILY CHALLENGE ====================
+        let dailyState = {
+            timer: 60,
+            intervalId: null,
+            score: 0,
+            questionsAnswered: 0,
+            correct: 0,
+            isActive: false
+        };
+
+        function getDailyKey() {
+            const today = new Date();
+            return `dailyChallenge_${today.getFullYear()}_${today.getMonth()}_${today.getDate()}`;
+        }
+
+        function isDailyChallengeCompleted() {
+            return localStorage.getItem(getDailyKey()) === 'completed';
+        }
+
+        function markDailyChallengeCompleted() {
+            localStorage.setItem(getDailyKey(), 'completed');
+            updateDailyBadge();
+        }
+
+        function updateDailyBadge() {
+            const badge = document.getElementById('daily-completed-badge');
+            if (isDailyChallengeCompleted()) {
+                badge.style.display = 'block';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+
+        function startDailyChallenge() {
+            if (isDailyChallengeCompleted()) {
+                showToast('Daily Challenge already completed! Come back tomorrow! 🌟', 'success');
+                return;
+            }
+
+            dailyState = {
+                timer: 60,
+                intervalId: null,
+                score: 0,
+                questionsAnswered: 0,
+                correct: 0,
+                isActive: true
+            };
+
+            gameState.currentGame = 'daily';
+            document.getElementById('menu-screen').style.display = 'none';
+            document.getElementById('daily-game').classList.add('active');
+            document.getElementById('daily-score').textContent = '0';
+            document.getElementById('daily-timer').textContent = '60';
+            document.getElementById('daily-timer').className = 'timer-display';
+
+            loadDailyQuestion();
+            startDailyTimer();
+        }
+
+        function startDailyTimer() {
+            dailyState.intervalId = setInterval(() => {
+                dailyState.timer--;
+                const timerEl = document.getElementById('daily-timer');
+                timerEl.textContent = dailyState.timer;
+
+                // Visual warnings
+                if (dailyState.timer <= 10) {
+                    timerEl.className = 'timer-display critical';
+                } else if (dailyState.timer <= 20) {
+                    timerEl.className = 'timer-display warning';
+                }
+
+                if (dailyState.timer <= 0) {
+                    endDailyChallenge();
+                }
+            }, 1000);
+        }
+
+        function loadDailyQuestion() {
+            if (!dailyState.isActive) return;
+
+            // Get random question type and word
+            const allWords = [...vocabulary.greetings, ...vocabulary.numbers, ...vocabulary.common];
+            const correctWord = shuffleArray(allWords)[0];
+            const otherWords = shuffleArray(allWords.filter(w => w.french !== correctWord.french)).slice(0, 3);
+            const options = shuffleArray([correctWord, ...otherWords]);
+
+            // Random question type
+            const questionTypes = ['translate', 'identify'];
+            const questionType = questionTypes[Math.floor(Math.random() * questionTypes.length)];
+
+            const container = document.getElementById('daily-container');
+
+            if (questionType === 'translate') {
+                container.innerHTML = `
+                    <div class="daily-question">What is the English translation?</div>
+                    <div class="daily-french-word">${correctWord.french}</div>
+                    <div class="daily-pronunciation">${correctWord.pronunciation}</div>
+                    <div class="daily-options">
+                        ${options.map(opt => `
+                            <button class="daily-option" onclick="checkDailyAnswer(this, '${opt.english}', '${correctWord.english}', '${correctWord.french}')">${opt.english}</button>
+                        `).join('')}
+                    </div>
+                `;
+            } else {
+                container.innerHTML = `
+                    <div class="daily-question">What is the French word for:</div>
+                    <div class="daily-french-word">${correctWord.english}</div>
+                    <div class="daily-options">
+                        ${options.map(opt => `
+                            <button class="daily-option" onclick="checkDailyAnswer(this, '${opt.french}', '${correctWord.french}', '${correctWord.french}')">${opt.french}</button>
+                        `).join('')}
+                    </div>
+                `;
+            }
+        }
+
+        function checkDailyAnswer(element, selected, correct, frenchWord) {
+            if (!dailyState.isActive) return;
+
+            const buttons = document.querySelectorAll('.daily-option');
+            buttons.forEach(btn => btn.disabled = true);
+
+            dailyState.questionsAnswered++;
+
+            if (selected === correct) {
+                element.classList.add('correct');
+                dailyState.score += 20;
+                dailyState.correct++;
+
+                playSound('correct');
+                learnWord(frenchWord);
+                updateWordStats(frenchWord, true);
+            } else {
+                element.classList.add('wrong');
+                buttons.forEach(btn => {
+                    if (btn.textContent === correct) btn.classList.add('correct');
+                });
+
+                playSound('wrong');
+                updateWordStats(frenchWord, false);
+            }
+
+            document.getElementById('daily-score').textContent = dailyState.score;
+
+            // Quick transition to next question
+            setTimeout(() => {
+                if (dailyState.isActive) {
+                    loadDailyQuestion();
+                }
+            }, 600);
+        }
+
+        function endDailyChallenge() {
+            if (dailyState.intervalId) {
+                clearInterval(dailyState.intervalId);
+                dailyState.intervalId = null;
+            }
+
+            dailyState.isActive = false;
+
+            // Calculate final score with 2x multiplier
+            const finalScore = dailyState.score * 2;
+            const accuracy = dailyState.questionsAnswered > 0
+                ? Math.round((dailyState.correct / dailyState.questionsAnswered) * 100)
+                : 0;
+
+            // Mark as completed if timer ran out (challenge was done)
+            if (dailyState.timer <= 0) {
+                markDailyChallengeCompleted();
+            }
+
+            // Award XP with bonus
+            addXP(finalScore);
+
+            // Calculate stars
+            const stars = accuracy >= 90 ? 3 : accuracy >= 70 ? 2 : accuracy >= 50 ? 1 : 0;
+
+            // Update modal
+            const starsContainer = document.getElementById('modal-stars');
+            starsContainer.innerHTML = [1, 2, 3].map(i =>
+                `<span class="star ${i <= stars ? '' : 'empty'}">⭐</span>`
+            ).join('');
+
+            document.getElementById('modal-score').textContent = finalScore + ' (2x bonus!)';
+            document.getElementById('modal-accuracy').textContent = accuracy + '%';
+
+            if (dailyState.timer <= 0) {
+                document.getElementById('modal-icon').textContent = '📅';
+                document.getElementById('modal-title').textContent = 'Daily Challenge Complete!';
+                document.getElementById('modal-message').textContent = `You answered ${dailyState.questionsAnswered} questions! Come back tomorrow for more!`;
+                createConfetti();
+            } else {
+                document.getElementById('modal-icon').textContent = '⏸️';
+                document.getElementById('modal-title').textContent = 'Challenge Ended Early';
+                document.getElementById('modal-message').textContent = `You answered ${dailyState.questionsAnswered} questions. Complete the full 60 seconds to mark it done!`;
+            }
+
+            document.querySelectorAll('.game-screen').forEach(screen => screen.classList.remove('active'));
+            document.getElementById('modal').classList.add('show');
+        }
+
         // ==================== END GAME ====================
         function endGame() {
             const totalAttempts = gameState.correct + gameState.wrong;
@@ -1458,6 +1864,7 @@
 
         // ==================== INITIALIZATION ====================
         loadProgress();
+        updateDailyBadge();
     </script>
 </body>
 </html>
