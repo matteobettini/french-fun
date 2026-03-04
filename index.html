@@ -1916,7 +1916,18 @@
                 difficulty.currentLevel = level; // Auto-promote
                 difficulty.accuracyHistory = []; // Reset for new level
                 saveDifficulty();
-                showUnlockNotification(level);
+                // Queue the notification to show after any active game modal closes
+                pendingUnlock = level;
+            }
+        }
+
+        // Pending unlock notification (shown after modal closes)
+        let pendingUnlock = null;
+
+        function showPendingUnlock() {
+            if (pendingUnlock) {
+                showUnlockNotification(pendingUnlock);
+                pendingUnlock = null;
             }
         }
 
@@ -1941,10 +1952,19 @@
             createConfetti();
         }
 
+        // Track if we need to restart game after unlock toast
+        let pendingPlayAgain = false;
+
         function closeUnlockToast() {
             document.getElementById('unlock-overlay').classList.remove('show');
             document.getElementById('unlock-toast').classList.remove('show');
             updateDifficultyDisplay();
+
+            // If user clicked Play Again before unlock toast, now start the game
+            if (pendingPlayAgain) {
+                pendingPlayAgain = false;
+                startGame(gameState.currentGame);
+            }
         }
 
         function updateDifficultyDisplay() {
@@ -2132,6 +2152,12 @@
         }
 
         // ==================== UTILITY FUNCTIONS ====================
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
         function getWordsByCategory(category) {
             const vocab = getVocabulary();
             if (category === 'all') {
@@ -2270,6 +2296,8 @@
             document.getElementById('menu-screen').style.display = 'block';
             document.querySelectorAll('.game-screen').forEach(screen => screen.classList.remove('active'));
             document.getElementById('modal').classList.remove('show');
+            // Show any pending unlock notification after modal closes
+            setTimeout(showPendingUnlock, 300);
         }
 
         function startGame(type) {
@@ -2291,7 +2319,13 @@
 
         function playAgain() {
             document.getElementById('modal').classList.remove('show');
-            startGame(gameState.currentGame);
+            // Show any pending unlock notification before starting new game
+            if (pendingUnlock) {
+                pendingPlayAgain = true;
+                showPendingUnlock();
+            } else {
+                startGame(gameState.currentGame);
+            }
         }
 
         // ==================== WORD MATCH GAME ====================
@@ -2318,7 +2352,7 @@
                 <div class="match-column">
                     <h4>🇫🇷 French</h4>
                     ${frenchWords.map(w => `
-                        <div class="match-item french" data-word="${w.french}" data-pair="${w.english}" onclick="selectMatch(this, 'french')">
+                        <div class="match-item french" data-word="${escapeHtml(w.french)}" data-pair="${escapeHtml(w.english)}" onclick="selectMatch(this, 'french')">
                             ${w.french}
                             <div class="pronunciation">${w.pronunciation}</div>
                         </div>
@@ -2327,7 +2361,7 @@
                 <div class="match-column">
                     <h4>🇬🇧 English</h4>
                     ${englishWords.map(w => `
-                        <div class="match-item english" data-word="${w.english}" data-pair="${w.french}" onclick="selectMatch(this, 'english')">
+                        <div class="match-item english" data-word="${escapeHtml(w.english)}" data-pair="${escapeHtml(w.french)}" onclick="selectMatch(this, 'english')">
                             ${w.english}
                         </div>
                     `).join('')}
@@ -2505,11 +2539,11 @@
             const container = document.getElementById('listen-container');
             container.innerHTML = `
                 <div class="listen-prompt">Listen to the French word and select the correct translation:</div>
-                <button class="listen-btn" onclick="speakWord('${correctWord.french}')" id="speak-btn">🔊</button>
+                <button class="listen-btn" onclick="speakWord('${correctWord.french.replace(/'/g, "\\'")}')" id="speak-btn">🔊</button>
                 <p style="color: #888; margin-bottom: 20px;">Click to hear the word</p>
                 <div class="listen-options">
                     ${options.map(opt => `
-                        <button class="listen-option" onclick="checkListenAnswer(this, '${opt.english}', '${correctWord.english}', '${correctWord.french}')">${opt.english}</button>
+                        <button class="listen-option" onclick="checkListenAnswer(this, '${opt.english.replace(/'/g, "\\'")}', '${correctWord.english.replace(/'/g, "\\'")}', '${correctWord.french.replace(/'/g, "\\'")}')">${opt.english}</button>
                     `).join('')}
                 </div>
             `;
