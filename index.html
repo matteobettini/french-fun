@@ -803,6 +803,93 @@
             50% { transform: scale(1.05); }
         }
 
+        /* Combo Streak System */
+        .combo-display {
+            position: fixed;
+            top: 50%;
+            right: 30px;
+            transform: translateY(-50%);
+            text-align: center;
+            z-index: 100;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .combo-display.active {
+            opacity: 1;
+        }
+
+        .combo-count {
+            font-size: 4rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, var(--gold), #FF8C00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: none;
+            line-height: 1;
+        }
+
+        .combo-label {
+            font-size: 1.2rem;
+            color: var(--french-red);
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .combo-multiplier {
+            font-size: 1.5rem;
+            color: var(--success);
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        .combo-display.pulse {
+            animation: comboPulse 0.4s ease;
+        }
+
+        @keyframes comboPulse {
+            0% { transform: translateY(-50%) scale(1); }
+            50% { transform: translateY(-50%) scale(1.3); }
+            100% { transform: translateY(-50%) scale(1); }
+        }
+
+        .combo-fire {
+            font-size: 2rem;
+            animation: fireWiggle 0.3s ease infinite;
+        }
+
+        @keyframes fireWiggle {
+            0%, 100% { transform: rotate(-5deg); }
+            50% { transform: rotate(5deg); }
+        }
+
+        /* Combo bonus toast */
+        .combo-bonus {
+            position: fixed;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--gold);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            z-index: 200;
+            pointer-events: none;
+        }
+
+        .combo-bonus.show {
+            animation: comboBonusAnim 1s ease forwards;
+        }
+
+        @keyframes comboBonusAnim {
+            0% { transform: translate(-50%, -50%) scale(0); opacity: 1; }
+            50% { transform: translate(-50%, -50%) scale(1.5); opacity: 1; }
+            100% { transform: translate(-50%, -100%) scale(1); opacity: 0; }
+        }
+
         /* Difficulty Level Badge */
         .difficulty-badge {
             display: inline-flex;
@@ -1280,6 +1367,15 @@
             <div class="daily-container" id="daily-container"></div>
         </div>
     </div>
+
+    <!-- Combo Display -->
+    <div class="combo-display" id="combo-display">
+        <div class="combo-fire">🔥</div>
+        <div class="combo-count" id="combo-count">0</div>
+        <div class="combo-label">COMBO</div>
+        <div class="combo-multiplier" id="combo-multiplier">x1.0</div>
+    </div>
+    <div class="combo-bonus" id="combo-bonus"></div>
 
     <!-- Toast Notification -->
     <div class="toast" id="toast"></div>
@@ -1895,6 +1991,7 @@
         }
 
         // ==================== GAME STATE ====================
+        let gameState = {
             currentGame: null,
             score: 0,
             round: 0,
@@ -1904,7 +2001,9 @@
             selectedCategory: 'all',
             matchSelected: null,
             matchedPairs: 0,
-            currentWords: []
+            currentWords: [],
+            combo: 0,
+            maxCombo: 0
         };
 
         // ==================== PROGRESS & STORAGE ====================
@@ -2100,6 +2199,72 @@
             }
         }
 
+        // ==================== COMBO STREAK SYSTEM ====================
+        function updateCombo(correct) {
+            const comboDisplay = document.getElementById('combo-display');
+            const comboCount = document.getElementById('combo-count');
+            const comboMultiplier = document.getElementById('combo-multiplier');
+
+            if (correct) {
+                gameState.combo++;
+                if (gameState.combo > gameState.maxCombo) {
+                    gameState.maxCombo = gameState.combo;
+                }
+
+                // Show combo display when streak >= 2
+                if (gameState.combo >= 2) {
+                    comboDisplay.classList.add('active');
+                    comboCount.textContent = gameState.combo;
+
+                    // Calculate multiplier (1.0 + 0.1 per combo, max 2.0)
+                    const multiplier = Math.min(1 + (gameState.combo - 1) * 0.1, 2.0);
+                    comboMultiplier.textContent = 'x' + multiplier.toFixed(1);
+
+                    // Pulse animation
+                    comboDisplay.classList.remove('pulse');
+                    void comboDisplay.offsetWidth; // Trigger reflow
+                    comboDisplay.classList.add('pulse');
+
+                    // Show bonus message at milestones
+                    if (gameState.combo === 3) showComboBonus('🔥 COMBO!');
+                    else if (gameState.combo === 5) showComboBonus('🔥🔥 ON FIRE!');
+                    else if (gameState.combo === 7) showComboBonus('🔥🔥🔥 UNSTOPPABLE!');
+                    else if (gameState.combo === 10) showComboBonus('⚡ LEGENDARY!');
+                }
+            } else {
+                // Reset combo on wrong answer
+                if (gameState.combo >= 3) {
+                    showComboBonus('💔 Combo Lost!');
+                }
+                gameState.combo = 0;
+                comboDisplay.classList.remove('active');
+            }
+        }
+
+        function showComboBonus(text) {
+            const bonus = document.getElementById('combo-bonus');
+            bonus.textContent = text;
+            bonus.classList.remove('show');
+            void bonus.offsetWidth; // Trigger reflow
+            bonus.classList.add('show');
+            setTimeout(() => bonus.classList.remove('show'), 1000);
+        }
+
+        function getComboMultiplier() {
+            if (gameState.combo < 2) return 1;
+            return Math.min(1 + (gameState.combo - 1) * 0.1, 2.0);
+        }
+
+        function calculateScore(baseScore) {
+            return Math.round(baseScore * getComboMultiplier());
+        }
+
+        function resetCombo() {
+            gameState.combo = 0;
+            gameState.maxCombo = 0;
+            document.getElementById('combo-display').classList.remove('active');
+        }
+
         // ==================== NAVIGATION ====================
         function showMenu() {
             document.getElementById('menu-screen').style.display = 'block';
@@ -2113,6 +2278,7 @@
             gameState.round = 0;
             gameState.correct = 0;
             gameState.wrong = 0;
+            resetCombo();
 
             document.getElementById('menu-screen').style.display = 'none';
             document.getElementById(`${type}-game`).classList.add('active');
@@ -2192,12 +2358,14 @@
                         frenchSelected.classList.remove('selected');
                         englishSelected.classList.remove('selected');
 
-                        gameState.score += 25;
+                        updateCombo(true);
+                        const points = calculateScore(25);
+                        gameState.score += points;
                         gameState.correct++;
                         gameState.matchedPairs++;
 
                         playSound('correct');
-                        showToast('Correct! +25 XP', 'success');
+                        showToast(`Correct! +${points} XP`, 'success');
                         learnWord(frenchWord);
                         updateWordStats(frenchWord, true, gameState.selectedCategory === 'all' ? 'common' : gameState.selectedCategory);
 
@@ -2218,6 +2386,7 @@
                         frenchSelected.classList.add('wrong');
                         englishSelected.classList.add('wrong');
                         gameState.wrong++;
+                        updateCombo(false);
 
                         playSound('wrong');
                         showToast('Try again!', 'error');
@@ -2272,11 +2441,13 @@
 
             if (selected === correct) {
                 element.classList.add('correct');
-                gameState.score += 30;
+                updateCombo(true);
+                const points = calculateScore(30);
+                gameState.score += points;
                 gameState.correct++;
 
                 playSound('correct');
-                showToast('Parfait! +30 XP', 'success');
+                showToast(`Parfait! +${points} XP`, 'success');
                 learnWord(correct);
                 updateWordStats(correct, true, 'phrases');
 
@@ -2287,6 +2458,7 @@
                     if (btn.textContent === correct) btn.classList.add('correct');
                 });
                 gameState.wrong++;
+                updateCombo(false);
 
                 playSound('wrong');
                 showToast(`The answer was: ${correct}`, 'error');
@@ -2371,11 +2543,13 @@
 
             if (selected === correct) {
                 element.classList.add('correct');
-                gameState.score += 35;
+                updateCombo(true);
+                const points = calculateScore(35);
+                gameState.score += points;
                 gameState.correct++;
 
                 playSound('correct');
-                showToast('Excellent! +35 XP', 'success');
+                showToast(`Excellent! +${points} XP`, 'success');
                 learnWord(frenchWord);
                 updateWordStats(frenchWord, true, gameState.selectedCategory === 'all' ? 'common' : gameState.selectedCategory);
             } else {
@@ -2384,6 +2558,7 @@
                     if (btn.textContent === correct) btn.classList.add('correct');
                 });
                 gameState.wrong++;
+                updateCombo(false);
 
                 playSound('wrong');
                 showToast(`It was: ${frenchWord} = ${correct}`, 'error');
@@ -2409,14 +2584,6 @@
         }
 
         // ==================== CONJUGATION GAME ====================
-        const tenseNames = {
-            present: "Présent (Present)",
-            passeCompose: "Passé Composé (Past)",
-            imparfait: "Imparfait (Imperfect)"
-        };
-
-        const subjectPronouns = ['je', 'tu', 'il', 'nous', 'vous', 'ils'];
-
         function initConjugateGame() {
             gameState.round = 0;
             document.getElementById('conjugate-score').textContent = '0';
@@ -2487,11 +2654,13 @@
 
             if (selected === correct) {
                 element.classList.add('correct');
-                gameState.score += 40;
+                updateCombo(true);
+                const points = calculateScore(40);
+                gameState.score += points;
                 gameState.correct++;
 
                 playSound('correct');
-                showToast('Bravo! +40 XP', 'success');
+                showToast(`Bravo! +${points} XP`, 'success');
                 learnWord(verbInfinitive);
                 updateWordStats(verbInfinitive, true, 'conjugation');
             } else {
@@ -2500,6 +2669,7 @@
                     if (btn.textContent === correct) btn.classList.add('correct');
                 });
                 gameState.wrong++;
+                updateCombo(false);
 
                 playSound('wrong');
                 showToast(`Correct: ${correct}`, 'error');
@@ -2765,6 +2935,9 @@
             const accuracy = totalAttempts > 0 ? Math.round((gameState.correct / totalAttempts) * 100) : 0;
             const stars = accuracy >= 90 ? 3 : accuracy >= 70 ? 2 : accuracy >= 50 ? 1 : 0;
 
+            // Hide combo display
+            document.getElementById('combo-display').classList.remove('active');
+
             addXP(gameState.score);
 
             // Update modal
@@ -2773,7 +2946,9 @@
                 `<span class="star ${i <= stars ? '' : 'empty'}">⭐</span>`
             ).join('');
 
-            document.getElementById('modal-score').textContent = gameState.score;
+            // Show max combo if achieved
+            const comboText = gameState.maxCombo >= 3 ? ` (🔥 ${gameState.maxCombo}x combo!)` : '';
+            document.getElementById('modal-score').textContent = gameState.score + comboText;
             document.getElementById('modal-accuracy').textContent = accuracy + '%';
 
             if (accuracy >= 90) {
