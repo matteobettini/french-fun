@@ -1407,6 +1407,7 @@
                 </div>
             </div>
             <button class="modal-btn" onclick="playAgain()">Play Again 🔄</button>
+            <button class="modal-btn" id="continue-btn" onclick="continueGame()" style="background: linear-gradient(135deg, var(--gold), #FFA000); color: #333;">Keep Going! +10% XP 🔥</button>
             <button class="modal-btn secondary" onclick="showMenu()">Menu 🏠</button>
         </div>
     </div>
@@ -2069,11 +2070,54 @@
             } else if (progress.lastPlayed === yesterday) {
                 progress.streak++;
                 progress.lastPlayed = today;
+                // Award streak bonus!
+                awardStreakBonus();
             } else if (progress.lastPlayed !== today) {
+                if (progress.streak >= 3) {
+                    // Lost a streak - show message
+                    setTimeout(() => showToast(`Streak lost! You had ${progress.streak} days`, 'error'), 1000);
+                }
                 progress.streak = 1;
                 progress.lastPlayed = today;
             }
             saveProgress();
+        }
+
+        function awardStreakBonus() {
+            const streak = progress.streak;
+            let bonusXP = 0;
+            let message = '';
+
+            // Milestone rewards
+            if (streak === 3) {
+                bonusXP = 50;
+                message = '3-day streak! +50 XP bonus!';
+            } else if (streak === 7) {
+                bonusXP = 150;
+                message = 'Week streak! +150 XP bonus!';
+            } else if (streak === 14) {
+                bonusXP = 300;
+                message = '2-week streak! +300 XP bonus!';
+            } else if (streak === 30) {
+                bonusXP = 500;
+                message = 'Month streak! +500 XP bonus!';
+            } else if (streak % 30 === 0) {
+                bonusXP = 500;
+                message = `${streak}-day streak! +500 XP bonus!`;
+            } else if (streak % 7 === 0) {
+                bonusXP = 100;
+                message = `${streak}-day streak! +100 XP bonus!`;
+            }
+
+            if (bonusXP > 0) {
+                progress.totalXP += bonusXP;
+                updateStatsDisplay();
+                saveProgress();
+                setTimeout(() => {
+                    showToast(message, 'success');
+                    createConfetti();
+                }, 500);
+            }
         }
 
         function updateStatsDisplay() {
@@ -2315,7 +2359,8 @@
         function calculateScore(baseScore) {
             const comboMult = getComboMultiplier();
             const speedMult = getSpeedBonus();
-            return Math.round(baseScore * comboMult * speedMult);
+            const contMult = continueMultiplier || 1.0;
+            return Math.round(baseScore * comboMult * speedMult * contMult);
         }
 
         function resetCombo() {
@@ -2340,6 +2385,7 @@
             gameState.correct = 0;
             gameState.wrong = 0;
             resetCombo();
+            resetContinueMultiplier();
 
             document.getElementById('menu-screen').style.display = 'none';
             document.getElementById(`${type}-game`).classList.add('active');
@@ -2359,6 +2405,32 @@
             } else {
                 startGame(gameState.currentGame);
             }
+        }
+
+        // Continue playing for bonus XP (keeps the session going)
+        let continueMultiplier = 1.0;
+
+        function continueGame() {
+            document.getElementById('modal').classList.remove('show');
+
+            // Increase multiplier for continuing (stacks up to 1.5x)
+            continueMultiplier = Math.min(continueMultiplier + 0.1, 1.5);
+
+            // Don't reset score, just keep playing
+            gameState.round = 0;
+            // Keep combo going!
+
+            showToast(`Continuing! XP multiplier: ${continueMultiplier.toFixed(1)}x`, 'success');
+
+            // Resume the current game without resetting score
+            if (gameState.currentGame === 'match') loadMatchRound();
+            else if (gameState.currentGame === 'fill') loadFillRound();
+            else if (gameState.currentGame === 'listen') loadListenRound();
+            else if (gameState.currentGame === 'conjugate') loadConjugateRound();
+        }
+
+        function resetContinueMultiplier() {
+            continueMultiplier = 1.0;
         }
 
         // ==================== WORD MATCH GAME ====================
@@ -3039,6 +3111,9 @@
             document.getElementById('modal-score').textContent = finalScore + ' (2x bonus!)';
             document.getElementById('modal-accuracy').textContent = accuracy + '%';
 
+            // Hide continue button for daily challenge
+            document.getElementById('continue-btn').style.display = 'none';
+
             if (dailyState.timer <= 0) {
                 document.getElementById('modal-icon').textContent = '📅';
                 document.getElementById('modal-title').textContent = 'Daily Challenge Complete!';
@@ -3073,8 +3148,12 @@
 
             // Show max combo if achieved
             const comboText = gameState.maxCombo >= 3 ? ` (🔥 ${gameState.maxCombo}x combo!)` : '';
-            document.getElementById('modal-score').textContent = gameState.score + comboText;
+            const contText = continueMultiplier > 1.0 ? ` [${continueMultiplier.toFixed(1)}x session]` : '';
+            document.getElementById('modal-score').textContent = gameState.score + comboText + contText;
             document.getElementById('modal-accuracy').textContent = accuracy + '%';
+
+            // Show continue button for regular games
+            document.getElementById('continue-btn').style.display = 'inline-block';
 
             if (accuracy >= 90) {
                 document.getElementById('modal-icon').textContent = '🏆';
