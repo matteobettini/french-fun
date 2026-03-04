@@ -2552,6 +2552,50 @@
             setTimeout(() => speakWord(correctWord.french), 500);
         }
 
+        // Cache for French voice
+        let cachedFrenchVoice = null;
+        
+        function getBestFrenchVoice() {
+            if (cachedFrenchVoice) return cachedFrenchVoice;
+            
+            const voices = speechSynthesis.getVoices();
+            const frenchVoices = voices.filter(v => v.lang.startsWith('fr'));
+            
+            if (frenchVoices.length === 0) return null;
+            
+            // Prefer neural/natural voices (usually have these keywords)
+            const preferredKeywords = ['neural', 'natural', 'premium', 'enhanced'];
+            for (const keyword of preferredKeywords) {
+                const match = frenchVoices.find(v => v.name.toLowerCase().includes(keyword));
+                if (match) {
+                    cachedFrenchVoice = match;
+                    return match;
+                }
+            }
+            
+            // Prefer Google or Microsoft voices
+            const googleOrMs = frenchVoices.find(v => 
+                v.name.includes('Google') || v.name.includes('Microsoft')
+            );
+            if (googleOrMs) {
+                cachedFrenchVoice = googleOrMs;
+                return googleOrMs;
+            }
+            
+            // Fall back to first French voice
+            cachedFrenchVoice = frenchVoices[0];
+            return cachedFrenchVoice;
+        }
+        
+        // Pre-load voices (needed on some browsers)
+        if ('speechSynthesis' in window) {
+            speechSynthesis.getVoices();
+            speechSynthesis.onvoiceschanged = () => {
+                cachedFrenchVoice = null;
+                getBestFrenchVoice();
+            };
+        }
+
         function speakWord(word) {
             if ('speechSynthesis' in window) {
                 const btn = document.getElementById('speak-btn');
@@ -2559,7 +2603,11 @@
 
                 const utterance = new SpeechSynthesisUtterance(word);
                 utterance.lang = 'fr-FR';
-                utterance.rate = 0.8;
+                utterance.rate = 0.85;
+                
+                // Use best available French voice
+                const voice = getBestFrenchVoice();
+                if (voice) utterance.voice = voice;
 
                 utterance.onend = () => btn.classList.remove('playing');
                 utterance.onerror = () => btn.classList.remove('playing');
