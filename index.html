@@ -2225,6 +2225,31 @@
             }
         }
 
+        // ==================== SPEED BONUS SYSTEM ====================
+        let questionStartTime = 0;
+
+        function startQuestionTimer() {
+            questionStartTime = Date.now();
+        }
+
+        function getSpeedBonus() {
+            if (questionStartTime === 0) return 1.0;
+            const elapsed = (Date.now() - questionStartTime) / 1000;
+            // Under 2 seconds: 1.5x, 2-4 seconds: 1.25x, 4-6 seconds: 1.0x, over 6: 0.8x
+            if (elapsed < 2) return 1.5;
+            if (elapsed < 4) return 1.25;
+            if (elapsed < 6) return 1.0;
+            return 0.8;
+        }
+
+        function getSpeedLabel() {
+            const bonus = getSpeedBonus();
+            if (bonus >= 1.5) return '⚡ LIGHTNING!';
+            if (bonus >= 1.25) return '🏃 FAST!';
+            if (bonus >= 1.0) return '';
+            return '🐢 Slow...';
+        }
+
         // ==================== COMBO STREAK SYSTEM ====================
         function updateCombo(correct) {
             const comboDisplay = document.getElementById('combo-display');
@@ -2257,6 +2282,12 @@
                     else if (gameState.combo === 7) showComboBonus('🔥🔥🔥 UNSTOPPABLE!');
                     else if (gameState.combo === 10) showComboBonus('⚡ LEGENDARY!');
                 }
+
+                // Show speed bonus message
+                const speedLabel = getSpeedLabel();
+                if (speedLabel && gameState.combo < 2) {
+                    showComboBonus(speedLabel);
+                }
             } else {
                 // Reset combo on wrong answer
                 if (gameState.combo >= 3) {
@@ -2282,7 +2313,9 @@
         }
 
         function calculateScore(baseScore) {
-            return Math.round(baseScore * getComboMultiplier());
+            const comboMult = getComboMultiplier();
+            const speedMult = getSpeedBonus();
+            return Math.round(baseScore * comboMult * speedMult);
         }
 
         function resetCombo() {
@@ -2367,6 +2400,7 @@
                     `).join('')}
                 </div>
             `;
+            startQuestionTimer();
         }
 
         function selectMatch(element, type) {
@@ -2467,6 +2501,7 @@
                 </div>
                 ${question.hint ? `<div class="fill-hint-text">${question.hint}</div>` : ''}
             `;
+            startQuestionTimer();
         }
 
         function checkFillAnswer(element, selected, correct) {
@@ -2548,8 +2583,11 @@
                 </div>
             `;
 
-            // Auto-play on load
-            setTimeout(() => speakWord(correctWord.french), 500);
+            // Auto-play on load and start timer after speech
+            setTimeout(() => {
+                speakWord(correctWord.french);
+                startQuestionTimer();
+            }, 500);
         }
 
         // Cache for French voice
@@ -2726,8 +2764,11 @@
                 </div>
             `;
 
-            // Speak the infinitive
-            setTimeout(() => speakWord(verb.infinitive), 300);
+            // Speak the infinitive and start timer
+            setTimeout(() => {
+                speakWord(verb.infinitive);
+                startQuestionTimer();
+            }, 300);
         }
 
         function checkConjugateAnswer(element, selected, correct, verbInfinitive) {
@@ -2924,6 +2965,7 @@
                     </div>
                 `;
             }
+            startQuestionTimer();
         }
 
         function checkDailyAnswer(element, selected, correct, frenchWord, category) {
@@ -2936,7 +2978,8 @@
 
             if (selected === correct) {
                 element.classList.add('correct');
-                dailyState.score += 20;
+                const speedBonus = getSpeedBonus();
+                dailyState.score += Math.round(20 * speedBonus);
                 dailyState.correct++;
 
                 playSound('correct');
