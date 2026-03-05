@@ -2113,7 +2113,7 @@
             currentGame: null,
             score: 0,
             round: 0,
-            totalRounds: 5,
+            totalRounds: 8,
             correct: 0,
             wrong: 0,
             selectedCategory: 'all',
@@ -2422,6 +2422,11 @@
                     else if (gameState.combo === 5) showComboBonus('🔥🔥 ON FIRE!');
                     else if (gameState.combo === 7) showComboBonus('🔥🔥🔥 UNSTOPPABLE!');
                     else if (gameState.combo === 10) showComboBonus('⚡ LEGENDARY!');
+                    // Near-miss psychology - tease upcoming milestones
+                    else if (gameState.combo === 2) showComboBonus('1 more for COMBO! 🎯');
+                    else if (gameState.combo === 4) showComboBonus('1 more for ON FIRE! 🔥');
+                    else if (gameState.combo === 6) showComboBonus('1 more for UNSTOPPABLE! 💪');
+                    else if (gameState.combo === 9) showComboBonus('1 MORE FOR LEGENDARY! ⚡');
                 }
 
                 // Show speed bonus message
@@ -3196,6 +3201,13 @@
             // Award XP with bonus
             addXP(finalScore);
 
+            // Track personal best for Daily Challenge
+            const previousBest = parseInt(localStorage.getItem('frenchFunDailyBest') || '0');
+            const isNewRecord = finalScore > previousBest;
+            if (isNewRecord) {
+                localStorage.setItem('frenchFunDailyBest', finalScore.toString());
+            }
+
             // Calculate stars
             const stars = accuracy >= 90 ? 3 : accuracy >= 70 ? 2 : accuracy >= 50 ? 1 : 0;
 
@@ -3205,16 +3217,19 @@
                 `<span class="star ${i <= stars ? '' : 'empty'}">⭐</span>`
             ).join('');
 
-            document.getElementById('modal-score').textContent = finalScore + ' (2x bonus!)';
+            const recordText = isNewRecord ? ' 🏆 NEW RECORD!' : ` (Best: ${previousBest})`;
+            document.getElementById('modal-score').textContent = finalScore + ' (2x bonus!)' + recordText;
             document.getElementById('modal-accuracy').textContent = accuracy + '%';
 
             // Hide continue button for daily challenge
             document.getElementById('continue-btn').style.display = 'none';
 
             if (dailyState.timer <= 0) {
-                document.getElementById('modal-icon').textContent = '📅';
-                document.getElementById('modal-title').textContent = 'Daily Challenge Complete!';
-                document.getElementById('modal-message').textContent = `You answered ${dailyState.questionsAnswered} questions! Come back tomorrow for more!`;
+                document.getElementById('modal-icon').textContent = isNewRecord ? '🏆' : '📅';
+                document.getElementById('modal-title').textContent = isNewRecord ? 'NEW PERSONAL BEST!' : 'Daily Challenge Complete!';
+                document.getElementById('modal-message').textContent = isNewRecord
+                    ? `Amazing! ${finalScore} points beats your record of ${previousBest}!`
+                    : `You answered ${dailyState.questionsAnswered} questions! Come back tomorrow for more!`;
                 createConfetti();
             } else {
                 document.getElementById('modal-icon').textContent = '⏸️';
